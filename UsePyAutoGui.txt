@@ -1,0 +1,166 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using CsAutoGui;
+
+namespace 懒人自动化
+{
+    public class CsJiaoBen
+    {
+        private CsAutoGui.AutoGui autoGui;
+        private List<string[]> allDatas;
+        public int sleepTime;
+        public string conFilePath;
+        public CsJiaoBen(string conPath)
+        {
+            this.conFilePath = conPath;
+            sleepTime = 0;
+            autoGui = new AutoGui();
+            autoGui.FailSafe = true;
+            allDatas = new List<string[]>();
+            string[] datas = File.ReadAllLines(this.conFilePath, Encoding.UTF8);
+            for (int i = 0; i < datas.Length; i++)
+            {
+                if (!datas[i].StartsWith("#"))
+                {
+                    allDatas.Add(datas[i].Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
+                }
+            }
+        }
+        public CsJiaoBen(string[] datas)
+        {
+            this.conFilePath = "";
+            sleepTime = 0;
+            autoGui = new AutoGui();
+            autoGui.FailSafe = true;
+            allDatas = new List<string[]>();
+            for (int i = 0; i < datas.Length; i++)
+            {
+                if (!datas[i].StartsWith("#"))
+                {
+                    allDatas.Add(datas[i].Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
+                }
+            }
+        }
+
+        public void Start()
+        {
+            for (int i = 0; i < allDatas.Count; i++)
+            {
+                Step(allDatas[i]);
+                if (sleepTime!=0)
+                {
+                    Thread.Sleep(sleepTime);
+                }
+            }
+        }
+
+        public void Copy(string test)
+        {
+            autoGui.Copy(test);
+        }
+
+        void Step(string[] data)
+        {
+
+            //0移动过去，不点击
+            if (data[0] == "0"|| data[0] == "移动")
+            {            
+                while (true)
+                {
+                    Location location = autoGui.LocateOnScreen(data[1], 0.9);
+                    if (location.IsNull()==false)
+                    {
+                        autoGui.MoveTo(autoGui.Center(location).X, autoGui.Center(location).Y);
+                        return;
+                    }
+                    Thread.Sleep(200);
+                }                  
+            }
+            //1单击左键
+            else if (data[0] == "1"||data[0] == "单击")
+            {
+                while (true)
+                {
+                    Location location = autoGui.LocateOnScreen(data[1], 0.9);
+                    if (location.IsNull() == false)
+                    {
+                        autoGui.MoveTo(autoGui.Center(location).X, autoGui.Center(location).Y);
+                       // Thread.Sleep(100);
+                        autoGui.Click();
+                        return;
+                    }
+                    Thread.Sleep(200);
+                }
+            }
+            //2双击左键
+            else if (data[0] == "2"|| data[0] == "双击")
+            {
+                while (true)
+                {
+                    Location location = autoGui.LocateOnScreen(data[1], 0.9);
+                    if (location.IsNull() == false)
+                    {
+                        autoGui.DoubleClick(autoGui.Center(location).X, autoGui.Center(location).Y, MouseButton.left);
+                        Thread.Sleep(100);
+                        return;
+                    }
+                    Thread.Sleep(200);
+                }
+            }
+            //3单击右键
+            else if (data[0] == "3"|| data[0] == "右键")
+            {
+                while (true)
+                {
+                    Location location = autoGui.LocateOnScreen(data[1], 0.9);
+                    if (location.IsNull() == false)
+                    {
+                        autoGui.DoubleClick(autoGui.Center(location).X, autoGui.Center(location).Y, MouseButton.right);
+                        return;
+                    }
+                    Thread.Sleep(200);
+                }
+            }
+            //4输入内容
+            else if (data[0] == "4"|| data[0] == "输入")
+            {
+                autoGui.SendTest(data[1]);
+                return;
+            }
+            //5等待延迟
+            else if (data[0] == "5" || data[0] == "等待")
+            {
+                Thread.Sleep(int.Parse(data[1]));
+                return;
+            }
+            //6滚轮
+            else if (data[0] == "6" || data[0] == "滚轮")
+            {
+                autoGui.Scroll(int.Parse(data[1]));
+                return;
+            }
+            //7按键
+            else if (data[0] == "7" || data[0] == "按键")
+            {
+                string[] buttons = data[1].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                autoGui.Press(buttons);
+                return;
+            }
+            //8热键
+            else if (data[0] == "8"||data[0] == "组合键")
+            {
+                string[] buttons = data[1].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                autoGui.HotKey(buttons);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+}
